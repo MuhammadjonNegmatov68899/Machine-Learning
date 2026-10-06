@@ -1,0 +1,3 @@
+model,cloud,edge,mobile,tinyml,justification
+LogisticRegression,YES,YES,YES,NO,"Fits Cloud, Edge and Mobile memory/latency/size budgets, but exceeds TinyML memory and size limits."
+RandomForestClassifier,YES,YES,YES,NO,"Fits Cloud, Edge and Mobile memory/latency/size budgets, but exceeds TinyML memory and size limits."lab01/report.md
