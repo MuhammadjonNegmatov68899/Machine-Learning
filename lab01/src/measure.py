@@ -4,6 +4,7 @@ import joblib
 import pandas as pd
 import random
 import numpy as np
+import torch
 
 from memory_profiler import memory_usage
 from sklearn.datasets import load_breast_cancer
@@ -15,6 +16,8 @@ from sklearn.ensemble import RandomForestClassifier
 # Reproducibility
 random.seed(42)
 np.random.seed(42)
+torch.manual_seed(42)
+torch.cuda.manual_seed_all(42)
 
 
 # Load dataset
@@ -30,17 +33,11 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 
 def create_logistic():
-    return LogisticRegression(
-        max_iter=1000,
-        random_state=42
-    )
+    return LogisticRegression(max_iter=1000, random_state=42)
 
 
 def create_random_forest():
-    return RandomForestClassifier(
-        n_estimators=100,
-        random_state=42
-    )
+    return RandomForestClassifier(n_estimators=100, random_state=42)
 
 
 def train_model(model):
@@ -49,7 +46,6 @@ def train_model(model):
 
 
 def measure_training_time(create_model):
-    # Warm-up
     model = create_model()
     train_model(model)
 
@@ -86,18 +82,30 @@ def measure_inference_time(model):
     return times[len(times) // 2]
 
 
-def measure_memory(create_model):
+def measure_training_memory(create_model):
     def train():
         model = create_model()
         model.fit(X_train, y_train)
 
-    memory = memory_usage(
+    return memory_usage(
         train,
         interval=0.01,
         max_usage=True
     )
 
-    return memory
+
+def measure_inference_memory(model):
+    sample = X_test[:1]
+
+    def infer():
+        for _ in range(100):
+            model.predict(sample)
+
+    return memory_usage(
+        infer,
+        interval=0.01,
+        max_usage=True
+    )
 
 
 def save_model_and_get_size(model, filename):
@@ -122,8 +130,17 @@ def main():
         logistic_model
     )
 
-    logistic_memory = measure_memory(
+    logistic_training_memory = measure_training_memory(
         create_logistic
+    )
+
+    logistic_inference_memory = measure_inference_memory(
+        logistic_model
+    )
+
+    logistic_peak_memory = max(
+        logistic_training_memory,
+        logistic_inference_memory
     )
 
     logistic_bytes, logistic_kb = save_model_and_get_size(
@@ -141,8 +158,17 @@ def main():
         rf_model
     )
 
-    rf_memory = measure_memory(
+    rf_training_memory = measure_training_memory(
         create_random_forest
+    )
+
+    rf_inference_memory = measure_inference_memory(
+        rf_model
+    )
+
+    rf_peak_memory = max(
+        rf_training_memory,
+        rf_inference_memory
     )
 
     rf_bytes, rf_kb = save_model_and_get_size(
@@ -173,12 +199,19 @@ def main():
             logistic_kb,
             rf_kb
         ],
+        "peak_memory_training_mb": [
+            logistic_training_memory,
+            rf_training_memory
+        ],
+        "peak_memory_inference_mb": [
+            logistic_inference_memory,
+            rf_inference_memory
+        ],
         "peak_memory_mb": [
-            logistic_memory,
-            rf_memory
+            logistic_peak_memory,
+            rf_peak_memory
         ]
     })
-
 
     results.to_csv(
         "lab01/results/measurements.csv",
