@@ -1,3 +1,27 @@
+# Virtual environments
 .venv/
-data/
+env/
+venv/
+ENV/
+
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Operating system files
 .DS_Store
+Thumbs.db
+
+# IDE configuration
+.vscode/
+.idea/
+
+# Dataset downloads (large binary files)
+data/
+lab03/data/
+
+# Archives and backups
+*.zip
+*.tar.gz
+.backup*

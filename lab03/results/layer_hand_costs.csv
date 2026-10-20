@@ -1,0 +1,10 @@
+Layer,Parameters,Hand_MACs,Hand_FLOPs,MAC_Formula,FLOP_Formula
+Linear (MLP Layer 1: 784->256),200960,200704,401408,in * out,2 * in * out
+"Conv2d (CNN Conv 2: 16->32, 3x3)",4640,903168,1806336,K * K * C_in * C_out * H_out * W_out,2 * K * K * C_in * C_out * H_out * W_out
+Attention (QKV Projections: 3x(16x64x64)),12480,196608,393216,3 * seq * d_model^2,6 * seq * d_model^2
+Attention (Attention Scores QK^T: 16x16x64),0,16384,32768,seq^2 * d_model,2 * seq^2 * d_model
+Attention (Attention Context AV: 16x16x64),0,16384,32768,seq^2 * d_model,2 * seq^2 * d_model
+Attention (Output Projection W_O: 16x64x64),4160,65536,131072,seq * d_model^2,2 * seq * d_model^2
+"Attention (MHA Block Total: seq=16, d=64)",16640,294912,589824,4 * seq * d_model^2 + 2 * seq^2 * d_model,8 * seq * d_model^2 + 4 * seq^2 * d_model
+Attention (Feed-Forward Network FFN: 64->128->64),16576,262144,524288,2 * seq * d_model * d_ff,4 * seq * d_model * d_ff
+Attention (Full Encoder Layer: MHA + FFN),33472,557056,1114112,MHA_macs + FFN_macs,2 * (MHA_macs + FFN_macs)
