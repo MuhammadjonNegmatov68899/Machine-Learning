@@ -203,6 +203,16 @@ The table below contrasts our hand-calculated values with the measurements produ
    - `torchinfo` correctly computes the $71{,}818$ total parameters, but its mult-add hooks also skip the attention matrix operations, capturing only $51{,}850$ mult-adds.
    - **Conclusion**: Relying solely on profiler packages like `thop` for Transformer architectures produces severe undercounting (by a factor of $\approx 23\times$). Rigorous hand calculations are necessary for accurate complexity analysis.
 
+### 4.4 Handwritten Calculations Document
+
+The complete handwritten step-by-step mathematical derivations for the MLP, CNN, and Multi-Head Attention layers—covering parameter counts, MACs, and FLOPs according to the textbook formulas—are compiled and archived in the accompanying document:
+
+👉 **[Handwritten Calculations Document (PDF)](hand_calculations/hand_calculations.pdf)**
+
+This document contains two upright, legible pages:
+- **Page 1**: Analytical parameter counts, MACs, and FLOPs for the Multilayer Perceptron (MLP) linear layers, as well as the Convolutional Neural Network (CNN) feature dimensions and Conv1/Conv2 parameter counts.
+- **Page 2**: CNN MACs and FLOPs completion, alongside the full step-by-step derivation for the Multi-Head Attention (MHA) and Feed-Forward Network (FFN) blocks inside the Transformer Encoder layer ($QKV$ projections, attention scores $QK^T$, attention context $AV$, output projection $W_O$, and dual linear feed-forward expansions).
+
 ---
 
 ## 5. Inference Latency Benchmarking
