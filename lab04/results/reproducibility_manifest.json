@@ -1,0 +1,44 @@
+{
+  "dataset_name": "adult",
+  "random_seeds": {
+    "split_random_state": 42,
+    "model_random_state": 42,
+    "audit_random_state": 42
+  },
+  "artifact_hashes": {
+    "raw_parquet_file_sha256": "23244698d388a08162887b859c35d3f3f45a712aa5ffe5a2034add94ad77b32c",
+    "raw_csv_file_sha256": "8f970e20c9991979ec0a9ccb65ce97543d678709a2c6f8ef23f7fb32f40adddc",
+    "raw_dataframe_sha256": "7f801a908760326a04bcd948d54df3de9af3e3b63219109bf89e3b9301775d35",
+    "train_dataframe_dedup_sha256": "c23b14491ccd173539d45cb53bfc953e6657aad07a9d8b6a90c49979f8906d3b",
+    "test_dataframe_sha256": "4fff27331581e54160031e81bc5c826c7ac9e0c39d44398926d28bab6b659285",
+    "preprocessor_joblib_sha256": "6b62edcc72fad876f7731cef938e4e8ebfa4a91c90ba7ac562ad5b185a89721c"
+  },
+  "dataset_shapes": {
+    "raw_shape": [
+      48842,
+      15
+    ],
+    "train_dedup_shape": [
+      34165,
+      15
+    ],
+    "test_shape": [
+      14653,
+      15
+    ]
+  },
+  "environment": {
+    "python_version": "3.11.8 (main, Oct  6 2026, 20:20:36) [Clang 21.0.0 (clang-2100.3.34.2)]",
+    "platform": "macOS-27.2-arm64-arm-64bit",
+    "processor": "arm",
+    "package_versions": {
+      "numpy": "1.26.4",
+      "pandas": "2.2.2",
+      "sklearn": "1.5.0",
+      "scipy": "1.13.1",
+      "yaml": "6.0.3",
+      "joblib": "1.4.2",
+      "pytest": "8.2.2"
+    }
+  }
+}

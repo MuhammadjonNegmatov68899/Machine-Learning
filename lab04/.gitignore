@@ -1,0 +1,16 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local datasets (raw & interim data)
+data/
+
+# Environments
+.venv/
+env/
+venv/
+
+# Operating system artifacts
+.DS_Store
+Thumbs.db

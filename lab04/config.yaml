@@ -1,0 +1,88 @@
+# Machine Learning Lab 4 - Configuration File
+
+dataset:
+  name: "adult"
+  version: 2
+  as_frame: true
+  raw_data_path: "data/raw/adult_raw.parquet"
+  raw_data_csv: "data/raw/adult_raw.csv"
+  expected_rows: 48842
+  expected_cols: 15
+  target_col: "income"
+  raw_target_col: "class"
+
+split:
+  train_size: 0.7
+  test_size: 0.3
+  random_state: 42
+  stratify: true
+
+validation:
+  missing_markers:
+    - "?"
+    - "nan"
+    - "NaN"
+    - "None"
+    - ""
+  numeric_ranges:
+    age:
+      min: 17
+      max: 90
+    hours-per-week:
+      min: 1
+      max: 99
+    capital-gain:
+      min: 0
+      max: 99999
+    capital-loss:
+      min: 0
+      max: 4356
+  expected_schema:
+    age: "integer"
+    workclass: "categorical"
+    fnlwgt: "integer"
+    education: "categorical"
+    education-num: "integer"
+    marital-status: "categorical"
+    occupation: "categorical"
+    relationship: "categorical"
+    race: "categorical"
+    sex: "categorical"
+    capital-gain: "integer"
+    capital-loss: "integer"
+    hours-per-week: "integer"
+    native-country: "categorical"
+    income: "categorical"
+
+preprocessing:
+  numeric_impute_strategy: "median"
+  categorical_impute_strategy: "most_frequent"
+  outlier_percentiles:
+    lower: 1.0
+    upper: 99.0
+  remove_train_duplicates: true
+  preprocessor_save_path: "results/preprocessor.joblib"
+
+feature_engineering:
+  age_offset: 16
+  min_denominator: 1.0
+
+model:
+  algorithm: "LogisticRegression"
+  max_iter: 1000
+  random_state: 42
+  solver: "lbfgs"
+
+audit:
+  sample_size: 50
+  random_state: 42
+  sampled_output_path: "results/sampled_50_rows.csv"
+  conflicts_output_path: "results/label_audit_conflicts.csv"
+  checklist_output_path: "results/label_audit_checklist.md"
+
+results:
+  validation_report_json: "results/validation_report.json"
+  validation_report_md: "results/validation_report.md"
+  model_comparison_csv: "results/model_comparison.csv"
+  model_comparison_md: "results/model_comparison.md"
+  reproducibility_manifest_json: "results/reproducibility_manifest.json"

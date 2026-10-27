@@ -1,0 +1,264 @@
+{
+  "summary": {
+    "total_rows": 48842,
+    "total_columns": 15,
+    "all_passed": true
+  },
+  "schema_validation": {
+    "missing_columns": [],
+    "unexpected_columns": [],
+    "type_checks": {
+      "age": {
+        "expected_type": "integer",
+        "actual_dtype": "int64",
+        "type_valid": true,
+        "non_integer_count": 0
+      },
+      "workclass": {
+        "expected_type": "categorical",
+        "actual_dtype": "category",
+        "type_valid": true,
+        "non_integer_count": 0
+      },
+      "fnlwgt": {
+        "expected_type": "integer",
+        "actual_dtype": "int64",
+        "type_valid": true,
+        "non_integer_count": 0
+      },
+      "education": {
+        "expected_type": "categorical",
+        "actual_dtype": "category",
+        "type_valid": true,
+        "non_integer_count": 0
+      },
+      "education-num": {
+        "expected_type": "integer",
+        "actual_dtype": "int64",
+        "type_valid": true,
+        "non_integer_count": 0
+      },
+      "marital-status": {
+        "expected_type": "categorical",
+        "actual_dtype": "category",
+        "type_valid": true,
+        "non_integer_count": 0
+      },
+      "occupation": {
+        "expected_type": "categorical",
+        "actual_dtype": "category",
+        "type_valid": true,
+        "non_integer_count": 0
+      },
+      "relationship": {
+        "expected_type": "categorical",
+        "actual_dtype": "category",
+        "type_valid": true,
+        "non_integer_count": 0
+      },
+      "race": {
+        "expected_type": "categorical",
+        "actual_dtype": "category",
+        "type_valid": true,
+        "non_integer_count": 0
+      },
+      "sex": {
+        "expected_type": "categorical",
+        "actual_dtype": "category",
+        "type_valid": true,
+        "non_integer_count": 0
+      },
+      "capital-gain": {
+        "expected_type": "integer",
+        "actual_dtype": "int64",
+        "type_valid": true,
+        "non_integer_count": 0
+      },
+      "capital-loss": {
+        "expected_type": "integer",
+        "actual_dtype": "int64",
+        "type_valid": true,
+        "non_integer_count": 0
+      },
+      "hours-per-week": {
+        "expected_type": "integer",
+        "actual_dtype": "int64",
+        "type_valid": true,
+        "non_integer_count": 0
+      },
+      "native-country": {
+        "expected_type": "categorical",
+        "actual_dtype": "category",
+        "type_valid": true,
+        "non_integer_count": 0
+      },
+      "income": {
+        "expected_type": "categorical",
+        "actual_dtype": "category",
+        "type_valid": true,
+        "non_integer_count": 0
+      }
+    }
+  },
+  "missing_values": {
+    "age": {
+      "standard_null_count": 0,
+      "question_mark_count": 0,
+      "total_missing_count": 0,
+      "pct_missing": 0.0
+    },
+    "workclass": {
+      "standard_null_count": 2799,
+      "question_mark_count": 0,
+      "total_missing_count": 2799,
+      "pct_missing": 5.731
+    },
+    "fnlwgt": {
+      "standard_null_count": 0,
+      "question_mark_count": 0,
+      "total_missing_count": 0,
+      "pct_missing": 0.0
+    },
+    "education": {
+      "standard_null_count": 0,
+      "question_mark_count": 0,
+      "total_missing_count": 0,
+      "pct_missing": 0.0
+    },
+    "education-num": {
+      "standard_null_count": 0,
+      "question_mark_count": 0,
+      "total_missing_count": 0,
+      "pct_missing": 0.0
+    },
+    "marital-status": {
+      "standard_null_count": 0,
+      "question_mark_count": 0,
+      "total_missing_count": 0,
+      "pct_missing": 0.0
+    },
+    "occupation": {
+      "standard_null_count": 2809,
+      "question_mark_count": 0,
+      "total_missing_count": 2809,
+      "pct_missing": 5.751
+    },
+    "relationship": {
+      "standard_null_count": 0,
+      "question_mark_count": 0,
+      "total_missing_count": 0,
+      "pct_missing": 0.0
+    },
+    "race": {
+      "standard_null_count": 0,
+      "question_mark_count": 0,
+      "total_missing_count": 0,
+      "pct_missing": 0.0
+    },
+    "sex": {
+      "standard_null_count": 0,
+      "question_mark_count": 0,
+      "total_missing_count": 0,
+      "pct_missing": 0.0
+    },
+    "capital-gain": {
+      "standard_null_count": 0,
+      "question_mark_count": 0,
+      "total_missing_count": 0,
+      "pct_missing": 0.0
+    },
+    "capital-loss": {
+      "standard_null_count": 0,
+      "question_mark_count": 0,
+      "total_missing_count": 0,
+      "pct_missing": 0.0
+    },
+    "hours-per-week": {
+      "standard_null_count": 0,
+      "question_mark_count": 0,
+      "total_missing_count": 0,
+      "pct_missing": 0.0
+    },
+    "native-country": {
+      "standard_null_count": 857,
+      "question_mark_count": 0,
+      "total_missing_count": 857,
+      "pct_missing": 1.755
+    },
+    "income": {
+      "standard_null_count": 0,
+      "question_mark_count": 0,
+      "total_missing_count": 0,
+      "pct_missing": 0.0
+    }
+  },
+  "range_validation": {
+    "age": {
+      "expected_range": [
+        17,
+        90
+      ],
+      "actual_range": [
+        17.0,
+        90.0
+      ],
+      "violations_low": 0,
+      "violations_high": 0,
+      "total_violations": 0,
+      "range_valid": true
+    },
+    "hours-per-week": {
+      "expected_range": [
+        1,
+        99
+      ],
+      "actual_range": [
+        1.0,
+        99.0
+      ],
+      "violations_low": 0,
+      "violations_high": 0,
+      "total_violations": 0,
+      "range_valid": true
+    },
+    "capital-gain": {
+      "expected_range": [
+        0,
+        99999
+      ],
+      "actual_range": [
+        0.0,
+        99999.0
+      ],
+      "violations_low": 0,
+      "violations_high": 0,
+      "total_violations": 0,
+      "range_valid": true
+    },
+    "capital-loss": {
+      "expected_range": [
+        0,
+        4356
+      ],
+      "actual_range": [
+        0.0,
+        4356.0
+      ],
+      "violations_low": 0,
+      "violations_high": 0,
+      "total_violations": 0,
+      "range_valid": true
+    }
+  },
+  "duplicates": {
+    "exact_duplicate_rows": 52,
+    "rows_sharing_features": 111
+  },
+  "findings": [
+    "Column 'workclass' has 2799 missing values (5.73%): 2799 standard nulls and 0 explicit '?' markers.",
+    "Column 'occupation' has 2809 missing values (5.75%): 2809 standard nulls and 0 explicit '?' markers.",
+    "Column 'native-country' has 857 missing values (1.75%): 857 standard nulls and 0 explicit '?' markers.",
+    "Detected 52 exact duplicate rows across all 15 columns.",
+    "Detected 111 rows sharing identical feature vectors (excluding target)."
+  ]
+}
