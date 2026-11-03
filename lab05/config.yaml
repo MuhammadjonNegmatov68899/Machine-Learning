@@ -1,0 +1,64 @@
+# Lab 5: Automatic Differentiation and Framework Performance Configuration
+
+project:
+  name: "Machine Learning Lab 05"
+  description: "Reverse-Mode Automatic Differentiation Engine and PyTorch Framework Benchmarks"
+  author: "Muhammadjon Negmatov"
+
+paths:
+  results_dir: "lab05/results"
+  gradient_comparison_csv: "lab05/results/gradient_comparison.csv"
+  training_comparison_csv: "lab05/results/training_comparison.csv"
+  execution_benchmarks_csv: "lab05/results/execution_benchmarks.csv"
+  tensor_layout_benchmarks_csv: "lab05/results/tensor_layout_benchmarks.csv"
+  benchmark_plots_png: "lab05/results/benchmark_plots.png"
+  summary_md: "lab05/results/summary.md"
+
+gradient_verification:
+  test_expression: "((a * b + c) ** 2).relu().sum()"
+  inputs:
+    a: 2.0
+    b: -3.0
+    c: 10.0
+  finite_diff_epsilon: 1.0e-6
+  tolerance: 1.0e-6
+  vector_test:
+    size: 5
+    a: [1.5, -2.0, 3.0, -0.5, 2.2]
+    b: [-1.0, 2.5, 0.5, -3.0, 1.2]
+    c: [0.5, 1.0, -2.0, 4.0, -1.5]
+
+training:
+  seeds: [42, 1337, 2024, 7, 999]
+  dataset:
+    name: "make_moons"
+    n_samples: 200
+    noise: 0.20
+    test_size: 0.25
+    dataset_seed: 42
+  model:
+    architecture: [2, 8, 1]
+    hidden_activation: "sigmoid"
+    output_activation: "sigmoid"
+  hyperparameters:
+    epochs: 150
+    learning_rate: 0.5
+    batch_size: 200  # Full batch gradient descent for deterministic comparison
+    loss_epsilon: 1.0e-15
+
+benchmarks:
+  framework:
+    warmup_iterations: 100
+    timed_iterations: 1000
+    batch_size: 32
+    input_dim: 2
+    hidden_dim: 8
+    output_dim: 1
+    device: "cpu"
+  tensor_layout:
+    warmup_iterations: 50
+    timed_iterations: 500
+    matrix_rows: 2048
+    matrix_cols: 2048
+    dtype: "float32"
+    device: "cpu"
