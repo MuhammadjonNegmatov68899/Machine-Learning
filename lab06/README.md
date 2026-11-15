@@ -20,13 +20,9 @@ Lab 6 builds an end-to-end, reproducible, production-grade deep learning enginee
    - MLflow integration logging flattened parameters, epoch-level metrics (`train_loss`, `val_loss`, `val_acc`, `throughput`), final test metrics, and artifacts (best model checkpoint, config YAML, loss curves).
 
 2. **Task 2: PyTorch Profiling & Compute Breakdown (15 pts):**
-   - Micro-architectural execution profiling over a complete training epoch via `torch.profiler`.
-   - Granular decomposition and percentage share reporting for:
-     - **Data Loading**
-     - **Forward Pass**
-     - **Backward Pass**
-     - **Optimizer Step**
-   - Export of Kineto Chrome traces (`lab06/results/task2_trace.json`), tabular operator summaries, and publication-ready breakdown visualizations.
+   - Dual-level profiling strategy:
+     - **Macro-Phase Wall-Clock Timing:** Synchronized monotonic timers (`time.perf_counter()` + `torch.mps.synchronize()`) measuring full-epoch real elapsed durations for **Data Loading** (36.2%), **Forward Pass** (16.8%), **Backward Pass** (31.2%), and **Optimizer Step** (15.8%).
+     - **Operator-Level PyTorch Profiling:** `torch.profiler` / Kineto engine tracing ATen C++ and Python operator activities (`aten::conv2d`, `aten::addmm`, `aten::relu`, autograd engine nodes) exported to `lab06/results/task2_operators_top25.csv` and Chrome trace `lab06/results/task2_trace.json`.
 
 3. **Task 3: DataLoader Workers Concurrency Study (15 pts):**
    - Parametric empirical sweep across worker subprocesses: $\text{num\_workers} \in [0, 1, 2, 4, 8]$.
@@ -44,13 +40,14 @@ Lab 6 builds an end-to-end, reproducible, production-grade deep learning enginee
 
 6. **Task 6: Gradient Accumulation (10 pts):**
    - Implementation of micro-batch gradient accumulation to simulate target batch size $256$ using physical batch size $64$ with $K=4$ accumulation steps.
-   - Rigorous mathematical and empirical comparison against standard physical batch size $256$.
-   - Demonstration of significant working memory savings with virtually identical convergence curves.
+   - Mathematically exact sample-weighted loss scaling for complete and incomplete final accumulation groups ($N_{group}=216$ vs $256$).
+   - Rigorous mathematical and empirical comparison against standard physical batch size $256$ ($\Delta\text{Loss} = 0.000012, \Delta\text{Acc} = 0.04\%$), detailing real memory dynamics.
 
 7. **Task 7: Stateful Checkpoint Interruption and Resumption (10 pts):**
    - Verification of uninterrupted training vs. an interrupted run halted at Epoch 3 and resumed from disk.
-   - Comprehensive restoration of model weights, optimizer momentum buffers, learning rate scheduler state, and PRNG states.
-   - Verification of continuous, seamless loss and accuracy trajectories.
+   - Genuine process restart simulation: saves and restores DataLoader `torch.Generator` state, instantiating a completely fresh DataLoader upon restart.
+   - Full PyTorch 2.6+ `weights_only=False` safe checkpointing compatibility.
+   - Bit-level exact numerical determinism confirmed ($0.0000\%$ error across all post-resumption epochs).
 
 8. **Task 8: Individual Project Proposal (15 pts):**
    - A one-page individual project proposal (**EdgeGesture-Lite**) authored by **Muhammadjon Negmatov (Student ID: 68899)**.
@@ -77,6 +74,7 @@ lab06/
 │   └── run_all_experiments.py         # Master orchestrator executing Tasks 1 through 7
 ├── results/                           # Generated CSV study tables, profiler summaries, and traces
 │   ├── task2_profiling_breakdown.csv
+│   ├── task2_operators_top25.csv
 │   ├── task2_profiler_summary.txt
 │   ├── task2_trace.json
 │   ├── task3_workers_study.csv

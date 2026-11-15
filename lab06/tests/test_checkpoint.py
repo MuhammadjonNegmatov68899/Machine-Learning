@@ -30,6 +30,10 @@ def test_checkpoint_save_and_load_integrity():
         metrics = {"val_acc": 88.5, "val_loss": 0.35}
         config = {"seed": 42, "lr": 1e-3}
 
+        gen1 = torch.Generator().manual_seed(999)
+        # Advance generator state
+        torch.randn(10, generator=gen1)
+
         save_checkpoint(
             chk_path,
             epoch=2,
@@ -38,6 +42,7 @@ def test_checkpoint_save_and_load_integrity():
             scheduler=scheduler1,
             metrics=metrics,
             config=config,
+            dataloader_generator=gen1,
         )
         assert os.path.exists(chk_path)
 
@@ -45,6 +50,7 @@ def test_checkpoint_save_and_load_integrity():
         model2 = CNN()
         optimizer2 = optim.Adam(model2.parameters(), lr=1e-3)
         scheduler2 = optim.lr_scheduler.StepLR(optimizer2, step_size=2, gamma=0.5)
+        gen2 = torch.Generator()
 
         restored_chk = load_checkpoint(
             chk_path,
@@ -52,10 +58,17 @@ def test_checkpoint_save_and_load_integrity():
             optimizer=optimizer2,
             scheduler=scheduler2,
             restore_rng=True,
+            dataloader_generator=gen2,
+            weights_only=False,
         )
 
         assert restored_chk["epoch"] == 2
         assert restored_chk["metrics"]["val_acc"] == 88.5
+
+        # Verify DataLoader generator state produces identical subsequent random numbers
+        rand1 = torch.randn(5, generator=gen1)
+        rand2 = torch.randn(5, generator=gen2)
+        assert torch.equal(rand1, rand2)
 
         # Verify weights match perfectly
         for p1, p2 in zip(model1.parameters(), model2.parameters()):

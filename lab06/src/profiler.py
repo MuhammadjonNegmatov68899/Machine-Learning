@@ -1,10 +1,12 @@
 """
 PyTorch Profiling Module for Lab 6 (Task 2).
-Uses torch.profiler to measure exact time and percentage spent on:
-- Data loading
-- Forward pass
-- Backward pass
-- Optimizer step
+Provides a dual-level profiling strategy:
+1. Macro-Phase Wall-Clock Timing: Measures real elapsed wall-clock duration and percentage
+   across the 4 core pipeline phases (Data Loading, Forward Pass, Backward Pass, Optimizer Step)
+   for the full training epoch using synchronized high-precision monotonic timers.
+2. Operator-Level PyTorch Profiling: Utilizes torch.profiler (Kineto engine) to trace
+   low-level ATen C++ and Python operator execution (convolutions, matrix multiplications,
+   autograd engine nodes, memory allocation, and Chrome trace generation).
 """
 
 from typing import Dict, Any, Tuple
@@ -145,6 +147,20 @@ def profile_training_epoch(
         f.write(f"=== PyTorch Profiler Summary (Device: {device}) ===\n")
         f.write(profiler_summary_str)
 
+    # Save structured Operator-Level Breakdown CSV (Top 20 ATen operators)
+    op_records = []
+    for evt in key_averages[:25]:
+        op_records.append({
+            "Operator": evt.key,
+            "Total_CPU_Time_ms": getattr(evt, "cpu_time_total", 0) / 1000.0,
+            "Self_CPU_Time_ms": getattr(evt, "self_cpu_time_total", 0) / 1000.0,
+            "Call_Count": getattr(evt, "count", 0),
+        })
+    op_df = pd.DataFrame(op_records)
+    op_csv_path = os.path.join(output_dir, "task2_operators_top25.csv")
+    op_df.to_csv(op_csv_path, index=False)
+    print(f"[Task 2 Profiler] Operator-level breakdown saved to {op_csv_path}", flush=True)
+
     # Export trace if requested
     trace_path = os.path.join(output_dir, "task2_trace.json")
     if export_trace:
@@ -209,7 +225,7 @@ def plot_profiling_results(df: pd.DataFrame, save_path: str, device_name: str = 
         wedgeprops=dict(width=0.45, edgecolor="white", linewidth=2),
     )
     plt.setp(autotexts, size=11, weight="bold")
-    ax_donut.set_title(f"Share of Training Time (%)\n(Device: {device_name.upper()})", fontsize=13, weight="bold")
+    ax_donut.set_title(f"Macro-Phase Training Share (%)\n(Device: {device_name.upper()})", fontsize=13, weight="bold")
 
     # Horizontal Bar Chart
     y_pos = np.arange(len(df))
@@ -218,7 +234,7 @@ def plot_profiling_results(df: pd.DataFrame, save_path: str, device_name: str = 
     ax_bar.set_yticklabels(df["Phase"])
     ax_bar.invert_yaxis()
     ax_bar.set_xlabel("Time per Epoch (milliseconds)")
-    ax_bar.set_title(f"Absolute Time Breakdown (ms)\nTotal: {df['Time_ms'].sum():.1f} ms", fontsize=13, weight="bold")
+    ax_bar.set_title(f"Macro-Phase Wall-Clock Breakdown (ms)\nTotal: {df['Time_ms'].sum():.1f} ms", fontsize=13, weight="bold")
 
     # Add data labels to bars
     for bar in bars:

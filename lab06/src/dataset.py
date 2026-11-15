@@ -41,6 +41,7 @@ def get_fashion_mnist_dataloaders(
     num_workers: int = 0,
     pin_memory: bool = False,
     val_split: int = 5000,
+    generator: Optional[torch.Generator] = None,
 ) -> Tuple[DataLoader, DataLoader, DataLoader]:
     """
     Loads Fashion-MNIST, normalizes using official mean (0.2860) and std (0.3530),
@@ -87,13 +88,14 @@ def get_fashion_mnist_dataloaders(
         generator=torch.Generator().manual_seed(seed),
     )
 
+    train_gen = generator if generator is not None else torch.Generator().manual_seed(seed)
     train_loader = DataLoader(
         train_subset,
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
         pin_memory=pin_memory,
-        generator=torch.Generator().manual_seed(seed),
+        generator=train_gen,
     )
 
     val_loader = DataLoader(

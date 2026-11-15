@@ -8,6 +8,7 @@ from typing import Dict, Any, Tuple, Optional
 import os
 import time
 import random
+import inspect
 import numpy as np
 import torch
 import torch.nn as nn
@@ -120,10 +121,11 @@ def save_checkpoint(
     scheduler: Optional[Any],
     metrics: Dict[str, float],
     config: Dict[str, Any],
+    dataloader_generator: Optional[torch.Generator] = None,
 ) -> None:
     """
     Saves a comprehensive training checkpoint containing model, optimizer,
-    scheduler states, RNG states, and training metadata.
+    scheduler states, RNG states (including DataLoader generator), and training metadata.
     """
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     rng_state = {
@@ -133,6 +135,8 @@ def save_checkpoint(
     }
     if torch.cuda.is_available():
         rng_state["cuda"] = torch.cuda.get_rng_state_all()
+    if dataloader_generator is not None:
+        rng_state["dataloader_generator"] = dataloader_generator.get_state()
 
     checkpoint_dict = {
         "epoch": epoch,
@@ -154,11 +158,20 @@ def load_checkpoint(
     scheduler: Optional[Any] = None,
     restore_rng: bool = True,
     device: Optional[torch.device] = None,
+    dataloader_generator: Optional[torch.Generator] = None,
+    weights_only: bool = False,
 ) -> Dict[str, Any]:
     """
     Restores model, optimizer, scheduler, and RNG states from checkpoint.
+    Compatible with PyTorch 2.6+ where weights_only defaults to True.
     """
-    checkpoint = torch.load(path, map_location=device or "cpu")
+    load_kwargs: Dict[str, Any] = {"map_location": device or "cpu"}
+    # Explicitly set weights_only=False for trusted local checkpoints containing
+    # full dictionary state (optimizer state, scheduler state, RNG tuples, config).
+    if "weights_only" in inspect.signature(torch.load).parameters:
+        load_kwargs["weights_only"] = weights_only
+
+    checkpoint = torch.load(path, **load_kwargs)
     model.load_state_dict(checkpoint["model_state_dict"])
 
     if optimizer and "optimizer_state_dict" in checkpoint and checkpoint["optimizer_state_dict"]:
@@ -180,6 +193,11 @@ def load_checkpoint(
             random.setstate(rng["python"])
         if torch.cuda.is_available() and "cuda" in rng and rng["cuda"]:
             torch.cuda.set_rng_state_all(rng["cuda"])
+        if dataloader_generator is not None and "dataloader_generator" in rng and rng["dataloader_generator"] is not None:
+            dl_gen_state = rng["dataloader_generator"]
+            if isinstance(dl_gen_state, torch.Tensor):
+                dl_gen_state = dl_gen_state.to(torch.uint8).cpu()
+            dataloader_generator.set_state(dl_gen_state)
 
     return checkpoint
 

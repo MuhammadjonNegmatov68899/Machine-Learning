@@ -619,6 +619,14 @@ def run_gradient_accumulation_study(
         peak_memory_mb = 0.0
         total_time = 0.0
 
+        total_batches = len(train_loader)
+        dataset_len = len(train_loader.dataset)
+        # Precompute the batch sizes across the epoch to handle incomplete final batches/groups
+        batch_sizes = [
+            bs if i < total_batches - 1 else (dataset_len - (total_batches - 1) * bs)
+            for i in range(total_batches)
+        ]
+
         for epoch in range(1, epochs + 1):
             model.train()
             running_loss = 0.0
@@ -626,27 +634,36 @@ def run_gradient_accumulation_study(
             t_ep_start = time.perf_counter()
 
             optimizer.zero_grad()
-            total_batches = len(train_loader)
 
             for batch_idx, (inputs, targets) in enumerate(train_loader):
                 inputs, targets = inputs.to(device), targets.to(device)
                 outputs = model(inputs)
                 loss = criterion(outputs, targets)
 
-                # Normalize loss by accumulation steps
-                loss_scaled = loss / accum_steps
+                cur_batch_size = inputs.size(0)
+                # Determine current accumulation group window and total samples in this group
+                group_idx = batch_idx // accum_steps
+                g_start = group_idx * accum_steps
+                g_end = min(g_start + accum_steps, total_batches)
+                group_total_samples = sum(batch_sizes[g_start:g_end])
+
+                # Mathematically exact scaling: weights each micro-batch proportional
+                # to its sample contribution within the accumulation group.
+                # For complete groups of size 256 with micro-batch 64: 64 / 256 = 1 / 4.
+                # For an incomplete final group of size 216: 64 / 216, 24 / 216.
+                loss_scaled = loss * (cur_batch_size / group_total_samples)
                 loss_scaled.backward()
 
-                running_loss += loss.item() * inputs.size(0)
-                total_samples += inputs.size(0)
+                running_loss += loss.item() * cur_batch_size
+                total_samples += cur_batch_size
 
                 # Monitor peak memory
                 mem = get_memory_info()
                 if mem["rss_mb"] > peak_memory_mb:
                     peak_memory_mb = mem["rss_mb"]
 
-                # Perform optimizer step at accumulation intervals or epoch boundary
-                if (batch_idx + 1) % accum_steps == 0 or (batch_idx + 1) == total_batches:
+                # Perform optimizer step at accumulation group boundary
+                if (batch_idx + 1) == g_end:
                     optimizer.step()
                     optimizer.zero_grad()
 
@@ -769,11 +786,13 @@ def run_checkpoint_resume_study(
     # -------------------------------------------------------------------------
     print("\n--- 1. Executing Uninterrupted Baseline Run (Epochs 1 -> 6) ---")
     set_seed(seed)
+    base_gen = torch.Generator().manual_seed(seed)
     train_loader, val_loader, test_loader = get_fashion_mnist_dataloaders(
         data_dir=data_dir,
         batch_size=batch_size,
         seed=seed,
         num_workers=0,
+        generator=base_gen,
     )
 
     baseline_model = CNN().to(device)
@@ -820,11 +839,13 @@ def run_checkpoint_resume_study(
     # -------------------------------------------------------------------------
     print(f"\n--- 2. Executing Initial Training with Interruption (Epochs 1 -> {interrupt_epoch}) ---")
     set_seed(seed)
-    train_loader, val_loader, test_loader = get_fashion_mnist_dataloaders(
+    int_gen = torch.Generator().manual_seed(seed)
+    int_train_loader, int_val_loader, int_test_loader = get_fashion_mnist_dataloaders(
         data_dir=data_dir,
         batch_size=batch_size,
         seed=seed,
         num_workers=0,
+        generator=int_gen,
     )
 
     int_model = CNN().to(device)
@@ -840,7 +861,7 @@ def run_checkpoint_resume_study(
         running_loss = 0.0
         total_samples = 0
 
-        for inputs, targets in train_loader:
+        for inputs, targets in int_train_loader:
             inputs, targets = inputs.to(device), targets.to(device)
             int_optimizer.zero_grad()
             outputs = int_model(inputs)
@@ -855,7 +876,7 @@ def run_checkpoint_resume_study(
             torch.mps.synchronize()
 
         ep_loss = running_loss / total_samples
-        v_loss, v_acc = evaluate(int_model, val_loader, criterion, device)
+        v_loss, v_acc = evaluate(int_model, int_val_loader, criterion, device)
         int_scheduler.step()
 
         resumed_train_loss.append(ep_loss)
@@ -864,7 +885,7 @@ def run_checkpoint_resume_study(
 
         print(f"Interrupted Run Epoch {epoch}/{interrupt_epoch} | Train Loss: {ep_loss:.4f} | Val Loss: {v_loss:.4f} | Val Acc: {v_acc:5.2f}%")
 
-    # Save Checkpoint at Epoch 3
+    # Save Checkpoint at Epoch 3 including DataLoader generator state
     checkpoint_file = os.path.join(checkpoint_dir, f"interrupted_epoch_{interrupt_epoch}.pt")
     save_checkpoint(
         checkpoint_file,
@@ -874,20 +895,22 @@ def run_checkpoint_resume_study(
         scheduler=int_scheduler,
         metrics={"train_loss": resumed_train_loss[-1], "val_loss": resumed_val_loss[-1], "val_acc": resumed_val_acc[-1]},
         config={"seed": seed, "batch_size": batch_size, "total_epochs": total_epochs},
+        dataloader_generator=int_gen,
     )
     print(f"[*] Checkpoint saved at epoch {interrupt_epoch} to {checkpoint_file}")
 
     # -------------------------------------------------------------------------
-    # 3. Simulate Restart & Resumption (Epochs 4 -> 6)
+    # 3. Simulate Genuine Process Restart & Resumption (Epochs 4 -> 6)
     # -------------------------------------------------------------------------
     print(f"\n--- 3. Resuming from Checkpoint at Epoch {interrupt_epoch} (Epochs {interrupt_epoch + 1} -> {total_epochs}) ---")
     
-    # Instantiate fresh model and optimizer
+    # 1. Instantiate fresh model, optimizer, scheduler, and DataLoader generator
     resumed_model = CNN().to(device)
     resumed_optimizer = optim.Adam(resumed_model.parameters(), lr=1e-3)
     resumed_scheduler = optim.lr_scheduler.StepLR(resumed_optimizer, step_size=3, gamma=0.5)
+    resumed_gen = torch.Generator()
 
-    # Restore from checkpoint
+    # 2. Restore all states from checkpoint (weights_only=False for PyTorch 2.6+ compatibility)
     chk = load_checkpoint(
         checkpoint_file,
         model=resumed_model,
@@ -895,16 +918,27 @@ def run_checkpoint_resume_study(
         scheduler=resumed_scheduler,
         restore_rng=True,
         device=device,
+        dataloader_generator=resumed_gen,
+        weights_only=False,
     )
     start_epoch = chk["epoch"] + 1
     print(f"[*] Successfully restored model, optimizer, scheduler, and RNG state. Resuming at epoch {start_epoch}...")
+
+    # 3. Instantiate a completely NEW DataLoader instance using the restored generator
+    resumed_train_loader, resumed_val_loader, resumed_test_loader = get_fashion_mnist_dataloaders(
+        data_dir=data_dir,
+        batch_size=batch_size,
+        seed=seed,
+        num_workers=0,
+        generator=resumed_gen,
+    )
 
     for epoch in range(start_epoch, total_epochs + 1):
         resumed_model.train()
         running_loss = 0.0
         total_samples = 0
 
-        for inputs, targets in train_loader:
+        for inputs, targets in resumed_train_loader:
             inputs, targets = inputs.to(device), targets.to(device)
             resumed_optimizer.zero_grad()
             outputs = resumed_model(inputs)
@@ -919,7 +953,7 @@ def run_checkpoint_resume_study(
             torch.mps.synchronize()
 
         ep_loss = running_loss / total_samples
-        v_loss, v_acc = evaluate(resumed_model, val_loader, criterion, device)
+        v_loss, v_acc = evaluate(resumed_model, resumed_val_loader, criterion, device)
         resumed_scheduler.step()
 
         resumed_train_loss.append(ep_loss)
@@ -928,7 +962,7 @@ def run_checkpoint_resume_study(
 
         print(f"Resumed Run Epoch {epoch}/{total_epochs} | Train Loss: {ep_loss:.4f} | Val Loss: {v_loss:.4f} | Val Acc: {v_acc:5.2f}%")
 
-    resumed_test_loss, resumed_test_acc = evaluate(resumed_model, test_loader, criterion, device)
+    resumed_test_loss, resumed_test_acc = evaluate(resumed_model, resumed_test_loader, criterion, device)
 
     # -------------------------------------------------------------------------
     # 4. Compare and Save Results
