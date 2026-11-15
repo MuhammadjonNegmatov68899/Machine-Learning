@@ -1,0 +1,50 @@
+# Lab 6 Master Training Configuration
+seed: 42
+
+dataset:
+  name: "FashionMNIST"
+  data_dir: "lab03/data"
+  val_split: 5000
+  batch_size: 128
+  num_workers: 2
+  pin_memory: false
+  mean: 0.2860
+  std: 0.3530
+
+model:
+  architecture: "CNN"
+  in_channels: 1
+  c1: 16
+  c2: 32
+  num_classes: 10
+
+training:
+  epochs: 5
+  device: "auto"
+  criterion: "CrossEntropyLoss"
+  optimizer:
+    type: "Adam"
+    lr: 0.001
+    weight_decay: 0.0
+    momentum: 0.9
+  scheduler:
+    type: "StepLR"
+    step_size: 3
+    gamma: 0.5
+    T_max: 10
+    patience: 1
+    factor: 0.5
+
+checkpoint:
+  save_dir: "lab06/checkpoints"
+  save_best_only: true
+  monitor: "val_acc"
+  mode: "max"
+  filename_prefix: "best_model"
+
+mlflow:
+  enabled: true
+  experiment_name: "lab06_training_pipeline"
+  run_name: "baseline_cnn_pipeline"
+  tracking_uri: "lab06/mlruns"
+  log_artifacts: true
