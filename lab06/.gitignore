@@ -1,0 +1,15 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local datasets
+data/
+
+# MLflow local runs (large binary logs)
+mlruns/
+.trash/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
