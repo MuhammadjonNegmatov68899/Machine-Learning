@@ -1,0 +1,56 @@
+experiment:
+  name: "lab07_compression_pruning_distillation"
+  seed: 42
+  device: "mps"  # auto-detected (mps / cuda / cpu)
+
+data:
+  dataset_name: "FashionMNIST"
+  preferred_data_dir: "data"
+  batch_size: 128
+  test_batch_size: 256
+  num_workers: 2
+  val_split: 0.1
+
+baseline_model:
+  name: "BaselineCNN"
+  in_channels: 1
+  c1: 64
+  c2: 128
+  c3: 240
+  c4: 288
+  fc_dim: 128
+  num_classes: 10
+  epochs: 8
+  lr: 0.001
+  weight_decay: 1.0e-4
+
+student_model:
+  name: "StudentCNN"
+  in_channels: 1
+  c1: 32
+  c2: 64
+  c3: 128
+  fc_dim: 64
+  num_classes: 10
+  epochs: 8
+  lr: 0.001
+  weight_decay: 1.0e-4
+
+pruning:
+  global_sparsity_targets: [0.0, 0.25, 0.50, 0.75, 0.90, 0.95]
+  layerwise_sparsity_targets: [0.0, 0.25, 0.50, 0.75, 0.90, 0.95]
+  structured_pruning_ratios: [0.10, 0.25, 0.50]
+  finetune_epochs: 3
+  finetune_lr: 0.0005
+
+distillation:
+  temperature: 4.0
+  alpha: 0.5
+  epochs: 10
+  lr: 0.001
+  weight_decay: 1.0e-4
+
+benchmark:
+  warmup_runs: 20
+  num_runs: 100
+  eval_batch_size: 64

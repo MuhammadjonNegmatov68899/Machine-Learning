@@ -1,0 +1,21 @@
+# Chapter 9 Four Pillars Efficiency Summary
+
+| Model                          | Environment       | Accuracy (%)   |   Total Params | Sparsity (%)   |   Dense Size (MB) |   FLOPs (M) |   CPU Latency (ms) |   CPU Throughput (samples/s) |   Energy Est (mJ/sample) |
+|:-------------------------------|:------------------|:---------------|---------------:|:---------------|------------------:|------------:|-------------------:|-----------------------------:|-------------------------:|
+| Baseline CNN (Teacher)         | Apple M2 CPU      | 90.16%         |      1,011,866 | 0.0%           |              3.86 |      468.85 |              71.54 |                        879.3 |                   16.767 |
+| Global Pruned 25%              | Apple M2 CPU      | 91.28%         |      1,011,008 | 25.0%          |              3.86 |      468.85 |              72.26 |                        860.2 |                   16.935 |
+| Global Pruned 50%              | Apple M2 CPU      | 90.86%         |      1,011,008 | 50.0%          |              3.86 |      468.85 |             171.17 |                        348.8 |                   40.118 |
+| Global Pruned 75%              | Apple M2 CPU      | 91.17%         |      1,011,008 | 75.0%          |              3.86 |      468.85 |              79.44 |                        805.9 |                   18.619 |
+| Global Pruned 90%              | Apple M2 CPU      | 91.16%         |      1,011,008 | 90.0%          |              3.86 |      468.85 |              82.92 |                        774.7 |                   19.435 |
+| Global Pruned 95%              | Apple M2 CPU      | 90.37%         |      1,011,008 | 95.0%          |              3.86 |      468.85 |              79.85 |                        669.8 |                   18.716 |
+| Layer-wise Pruned 25%          | Apple M2 CPU      | 91.27%         |      1,011,008 | 25.0%          |              3.86 |      468.85 |              81.66 |                        753.6 |                   19.139 |
+| Layer-wise Pruned 50%          | Kaggle Cloud vCPU | 91.20%         |      1,011,008 | 50.0%          |              3.86 |      468.85 |             193.24 |                        323   |                   45.291 |
+| Layer-wise Pruned 75%          | Kaggle Cloud vCPU | 91.03%         |      1,011,008 | 75.0%          |              3.86 |      468.85 |             196.46 |                        321.9 |                   46.045 |
+| Layer-wise Pruned 90%          | Kaggle Cloud vCPU | 89.33%         |      1,011,008 | 90.0%          |              3.86 |      468.85 |             197.59 |                        326.7 |                   46.311 |
+| Layer-wise Pruned 95%          | Kaggle Cloud vCPU | 82.14%         |      1,011,008 | 95.0%          |              3.86 |      468.85 |             196.96 |                        321   |                   46.162 |
+| Baseline CNN (Kaggle Baseline) | Kaggle Cloud vCPU | 90.16%         |      1,011,866 | 0.0%           |              3.86 |      468.85 |             193.79 |                        322.4 |                   45.419 |
+| Structured Pruned 10%          | Kaggle Cloud vCPU | 91.08%         |        822,826 | 18.7%          |              3.14 |      381.26 |             150.09 |                        423.1 |                   35.177 |
+| Structured Pruned 25%          | Kaggle Cloud vCPU | 91.43%         |        576,950 | 43.0%          |              2.21 |      267.33 |             107.03 |                        585.6 |                   25.084 |
+| Structured Pruned 50%          | Kaggle Cloud vCPU | 91.12%         |        263,570 | 74.0%          |              1.01 |      122.13 |              53.93 |                       1177   |                   12.639 |
+| Student CNN (Plain CE)         | Kaggle Cloud vCPU | 84.78%         |        101,578 | 0.0%           |              0.39 |       14.93 |             239.44 |                        266.9 |                   56.119 |
+| Student CNN (Distilled)        | Kaggle Cloud vCPU | 84.74%         |        101,578 | 0.0%           |              0.39 |       14.93 |             103.92 |                        611.5 |                   24.357 |
